@@ -1,0 +1,6 @@
+services:
+  opentts:
+    image: synesthesiam/opentts:en
+    ports:
+      - "5500:5500"
+    restart: unless-stopped

@@ -1,0 +1,6 @@
+ngrock command :  ngrok http --url=live-termite-finally.ngrok-free.app 5555
+
+ASR: docker run -p 8002:8000 whisper-asr
+
+TTS: docker run -p 5500:5500 synesthesiam/opentts:en
+

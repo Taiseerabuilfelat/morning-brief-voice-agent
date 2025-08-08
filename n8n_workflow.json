@@ -1,0 +1,508 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -500,
+        -80
+      ],
+      "id": "51d41ccb-cc40-4e03-8d4c-a7c67d6d3679",
+      "name": "Telegram Trigger",
+      "webhookId": "7db56563-bf14-4e7e-8cb6-2676a7e94f2a",
+      "credentials": {
+        "telegramApi": {
+          "id": "PfKMGn9nmpiVzXaV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -300,
+        -80
+      ],
+      "id": "5ff50e98-1f76-40fb-b61e-70340a3e316f",
+      "name": "Telegram",
+      "webhookId": "5dd8152c-9174-4212-a3f0-7760f2974669",
+      "credentials": {
+        "telegramApi": {
+          "id": "PfKMGn9nmpiVzXaV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=Role: You are an email and calendar management assistant responsible for handling emails professionally and providing calendar insights. Only emails must be formatted in HTML.\nTask: Manage emails efficiently and provide daily summaries using the appropriate email management tools based on user requests.\nInstructions:\n\nRetrieving Emails: Use \"Get Emails\" to fetch emails when requested.\nRetrieving Labels: Use \"Get Labels\" to fetch email labels.\nLabeling Emails:\n\nUse \"Get Emails\" to obtain the message ID.\nUse \"Get Labels\" to retrieve the label ID.\nUse \"Label Email\" to apply the label.\n\n\nRetrieving Calendar Events: Use \"Get Events\" to fetch calendar events when requested.\nRetrieving Event Labels: Use \"Get Event Labels\" to fetch event labels.\nLabeling Events:\n\nUse \"Get Events\" to obtain the event ID.\nUse \"Get Event Labels\" to retrieve the label ID.\nUse \"Label Event\" to apply the label.\n\n\nDaily Summary: When requested, provide a comprehensive summary that includes:\n\nList of unread messages (filter by isRead eq false and receivedDateTime after 7:00 AM today)\nToday's calendar events using /me/calendarview endpoint\n\n\n\nRules:\n\nEnsure proper use of tools based on the email or event task required.\nFor daily summaries, filter emails by unread status and received after 7:00 AM today.\nInclude all calendar events for the current day.\nNEVER include phrases like \"Please let me know if you'd like me to filter\" or any follow-up questions\nNEVER include any n8n attribution links or automated signatures\n\nResponse Format:\n\nStart with exactly: \"Here is the daily summary:\"\nFollow the exact markdown format shown\nEnd the response immediately after the events list\nDo not add any additional text, explanations, or suggestions\n\nHere is the current date/time: {{ $now }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        500,
+        -80
+      ],
+      "id": "b2c5a128-8ad0-4023-b810-0984f1b15bbb",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const escapeMarkdown = (text) => {\n  return text\n    .replace(/_/g, '\\\\_')\n    .replace(/\\*/g, '\\\\*')\n    .replace(/\\[/g, '\\\\[')\n    .replace(/\\]/g, '\\\\]')\n    .replace(/\\(/g, '\\\\(')\n    .replace(/\\)/g, '\\\\)')\n    .replace(/~/g, '\\\\~')\n    .replace(/`/g, '\\\\`')\n    .replace(/>/g, '\\\\>')\n    .replace(/#/g, '\\\\#')\n    .replace(/\\+/g, '\\\\+')\n    .replace(/-/g, '\\\\-')   // only if used for bullets\n    .replace(/=/g, '\\\\=')\n    .replace(/\\|/g, '\\\\|')\n    .replace(/{/g, '\\\\{')\n    .replace(/}/g, '\\\\}')\n    .replace(/\\./g, '\\\\.')\n    .replace(/!/g, '\\\\!');\n};\n\n// Replace \\n with actual line breaks and escape special characters\nitems[0].json.output = escapeMarkdown(items[0].json.output.replace(/\\\\n/g, '\\n'));\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        -80
+      ],
+      "id": "9da4e0f8-9d15-4eaa-8f3e-292c0558c66b",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        400,
+        140
+      ],
+      "id": "60501976-69ad-4ba2-a516-e5a3ab715dfb",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "GWTy1JmiGCPtyTNx",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{$json.text.toLowerCase() }}",
+                    "rightValue": "start summary",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "703e2254-b26f-468f-8ae0-e12b29eabbd1"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        220,
+        -80
+      ],
+      "id": "9a2db137-5b1f-4b00-8d22-18ce45fdcbe0",
+      "name": "Switch",
+      "executeOnce": true,
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 5,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlookTool",
+      "typeVersion": 2,
+      "position": [
+        640,
+        180
+      ],
+      "id": "d5044a2e-d0d0-4455-b85f-902311353fe9",
+      "name": "Microsoft Outlook1",
+      "webhookId": "4aae9761-586e-4059-a4d1-667e18d4001c",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "vqfEO34YF6hq2T60",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "event",
+        "fromAllCalendars": false,
+        "calendarId": {
+          "__rl": true,
+          "value": "AQMkADAwATYwMAItYWIyZi03NmJkLTAwAi0wMAoARgAAA01bWsbbl9hDqjtP_mCTob0HACeTkwAbsPniRrz75ILFifz0AAACAQYAAAAnk5MAG7D54ka8__SCxYn89AAAAnraAAAA",
+          "mode": "list",
+          "cachedResultName": "Calendar"
+        },
+        "limit": "={{ $fromAI('Limit', ``, 'number') }}",
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlookTool",
+      "typeVersion": 2,
+      "position": [
+        920,
+        160
+      ],
+      "id": "c9f5906e-b7f7-4c39-aa89-514402174fd9",
+      "name": "Microsoft Outlook2",
+      "webhookId": "8287fbff-f7c7-47dd-89a8-9813feb3e1c9",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "vqfEO34YF6hq2T60",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlookTool",
+      "typeVersion": 2,
+      "position": [
+        760,
+        180
+      ],
+      "id": "2f4d28f5-c4ca-4b31-9a4a-eea592bd61f8",
+      "name": "Microsoft Outlook",
+      "webhookId": "077e4ae9-9bc6-412c-82f7-f0ee0ab6b031",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "vqfEO34YF6hq2T60",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8002/transcribe",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        -80
+      ],
+      "id": "5e5e1147-4d0d-4487-9ca0-79200e3979a0",
+      "name": "ASR",
+      "retryOnFail": true,
+      "executeOnce": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:5500/api/tts",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "voice",
+              "value": "larynx:ek"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1140,
+        20
+      ],
+      "id": "5685b9b7-ab3f-4a84-8a4d-3d1e8e29808a",
+      "name": "TTS",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "contextWindowLength": 1
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        520,
+        180
+      ],
+      "id": "0182f09c-2f75-45e6-aab7-ef99e62ceb8a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        -200
+      ],
+      "id": "45f255b5-9d34-418c-932a-a0cbbc267c2e",
+      "name": "Text",
+      "webhookId": "ab7112a9-5474-4bcc-bdb8-690773432e49",
+      "credentials": {
+        "telegramApi": {
+          "id": "PfKMGn9nmpiVzXaV",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "5831397620",
+        "binaryData": true,
+        "additionalFields": {
+          "fileName": "speech.ogg"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1360,
+        20
+      ],
+      "id": "a9206e9e-d011-4d09-bd98-dafd956e756f",
+      "name": "Audio",
+      "webhookId": "f20148f7-31f5-4afa-a2d5-25e872f00232",
+      "credentials": {
+        "telegramApi": {
+          "id": "PfKMGn9nmpiVzXaV",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram": {
+      "main": [
+        [
+          {
+            "node": "ASR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Microsoft Outlook1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft Outlook2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Microsoft Outlook": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ASR": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS": {
+      "main": [
+        [
+          {
+            "node": "Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Amman",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "55de97b8-be39-4eee-baed-c48ccd19997e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7064a5ac4ba1fc261610b8c7e1dfc81ab5a462c526155039de81ad79650f2858"
+  },
+  "id": "jHVcMdRms3v8356b",
+  "tags": []
+}

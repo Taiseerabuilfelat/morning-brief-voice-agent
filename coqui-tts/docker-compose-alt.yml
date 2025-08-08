@@ -1,0 +1,6 @@
+services:
+  coqui-tts:
+    image: ghcr.io/synesthesiam/opentts:en
+    ports:
+      - "5500:5500"
+    restart: unless-stopped
